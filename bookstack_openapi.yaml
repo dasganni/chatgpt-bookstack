@@ -52,12 +52,21 @@ paths:
               properties:
                 name:
                   type: string
+                  minLength: 1 # Minimale Länge basierend auf der Validierung "min:1"
+                  maxLength: 255 # Maximale Länge basierend auf der Validierung "max:255"
+                  description: "Name of the attachment. Min: 1, Max: 255 characters."
                 uploaded_to:
-                  type: string
-                file:
-                  type: string
+                  type: integer # Geändert zu integer, um der Validierungsregel "integer" zu entsprechen
+                  description: ID of the page the upload is related to. Must exist.
                 link:
                   type: string
+                  minLength: 1 # Minimale Länge basierend auf der Validierung "min:1"
+                  maxLength: 2000 # Maximale Länge basierend auf der Validierung "max:2000"
+                  description: "Safe URL. Required without file. Min: 1, Max: 2000 characters."
+              required:
+                - name
+                - uploaded_to
+                - link
   /api/attachments/{id}:
     get:
       parameters:
@@ -73,6 +82,18 @@ paths:
       responses:
         '200':
           description: Successful operation
+          content:
+            application/json:
+              example: # Beispielantwort aus "attachments-read" im JSON
+                id: 5
+                name: "My link attachment"
+                extension: ""
+                uploaded_to: 4
+                external: true
+                order: 2
+                created_at: "2021-10-20T06:35:46.000000Z"
+                updated_at: "2021-10-20T06:37:11.000000Z"
+                content: "https://link.example.com/updated"
     put:
       parameters:
         - in: path
@@ -81,6 +102,7 @@ paths:
           schema:
             type: string
       summary: Updates an attachment''s details. Use multipart/form-data for file content.
+      description: Update the details of a single attachment. If a file is being provided as the attachment content the request should be formatted as a multipart/form-data request instead of JSON.
       operationId: attachments-update
       tags:
         - attachments
@@ -96,12 +118,25 @@ paths:
               properties:
                 name:
                   type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: "Name of the attachment. Min: 1, Max: 255 characters."
                 uploaded_to:
-                  type: string
+                  type: integer
+                  description: "ID of the page the upload is related to. Must exist."
                 file:
                   type: string
+                  format: binary
+                  description: "File content. Required without link. Max size: 50000 bytes."
                 link:
                   type: string
+                  minLength: 1
+                  maxLength: 2000
+                  description: "Safe URL. Required without file. Min: 1, Max: 2000 characters."
+            example:
+              name: "My updated attachment"
+              uploaded_to: 4
+              link: "https://link.example.com/updated"
     delete:
       parameters:
         - in: path
@@ -110,6 +145,7 @@ paths:
           schema:
             type: string
       summary: Deletes an attachment by ID.
+      description: Delete an attachment of the given ID.
       operationId: attachments-delete
       tags:
         - attachments
@@ -118,21 +154,21 @@ paths:
           description: Successful operation
   /api/books:
     get:
-      summary: Retrieves a list of books visible to the user.
+      summary: "Retrieves a list of books visible to the user."
       operationId: books-list
       tags:
         - books
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
     post:
-      summary: Creates a new book. Use multipart/form-data to set a cover image, or null to remove it.
+      summary: "Creates a new book. Note: Cover image upload is not supported due to JSON content type limitation."
       operationId: books-create
       tags:
         - books
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
       requestBody:
         required: true
         content:
@@ -143,26 +179,20 @@ paths:
                 name:
                   type: string
                   maxLength: 255
-                  description: Name of the book.
+                  description: "Name of the book."
                 description:
                   type: string
                   maxLength: 1900
-                  description: A brief description of the book.
-                description_html:
-                  type: string
-                  maxLength: 2000
-                  description: HTML formatted description of the book.
+                  description: "A brief description of the book."
                 tags:
                   type: array
                   items:
                     $ref: '#/components/schemas/Tag'
-                  description: Tags associated with the book.
-                image:
-                  type: string
+                  description: "Tags associated with the book."
                 default_template_id:
                   type: integer
                   nullable: true
-                  description: ID of the default template for the book.
+                  description: "ID of the default template for the book."
               required:
                 - name
   /api/books/{id}:
@@ -173,13 +203,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: Shows details of a book, including chapters and pages as seen in the BookStack interface.
+      summary: "Shows details of a book, including chapters and pages as seen in the BookStack interface."
       operationId: books-read
       tags:
         - books
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
     put:
       parameters:
         - in: path
@@ -187,13 +217,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: Updates a book. Use multipart/form-data to set or remove a cover image.
+      summary: "Updates a book. Note: Cover image update is not supported due to JSON content type limitation."
       operationId: books-update
       tags:
         - books
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
       requestBody:
         required: true
         content:
@@ -203,16 +233,22 @@ paths:
               properties:
                 name:
                   type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: "Name of the book."
                 description:
                   type: string
-                description_html:
-                  type: string
+                  maxLength: 1900
+                  description: "A brief description of the book."
                 tags:
-                  type: string
-                image:
-                  type: string
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+                  description: "Tags associated with the book."
                 default_template_id:
-                  type: string
+                  type: integer
+                  nullable: true
+                  description: "ID of the default template for the book."
     delete:
       parameters:
         - in: path
@@ -220,28 +256,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: Deletes a book, typically moving it to the recycle bin.
+      summary: "Deletes a book, typically moving it to the recycle bin."
       operationId: books-delete
       tags:
         - books
       responses:
         '200':
-          description: Successful operation
-  /api/books/{id}/export/plaintext:
-    get:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      summary: Exports a book as a plain text file.
-      operationId: books-exportPlainText
-      tags:
-        - books
-      responses:
-        '200':
-          description: Successful operation
+          description: "Successful operation"
   /api/books/{id}/export/markdown:
     get:
       parameters:
@@ -259,21 +280,21 @@ paths:
           description: Successful operation
   /api/chapters:
     get:
-      summary: Retrieves a list of chapters visible to the user.
+      summary: "Retrieves a list of chapters visible to the user."
       operationId: chapters-list
       tags:
         - chapters
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
     post:
-      summary: Creates a new chapter in the system.
+      summary: "Creates a new chapter in the system."
       operationId: chapters-create
       tags:
         - chapters
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
       requestBody:
         required: true
         content:
@@ -282,17 +303,28 @@ paths:
               type: object
               properties:
                 book_id:
-                  type: string
+                  type: integer
+                  description: "ID of the book this chapter belongs to."
                 name:
                   type: string
+                  maxLength: 255
+                  description: "Name of the chapter."
                 description:
                   type: string
-                description_html:
-                  type: string
+                  maxLength: 1900
+                  description: "A brief description of the chapter."
                 tags:
-                  type: string
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+                  description: "Tags associated with the chapter."
                 priority:
-                  type: string
+                  type: integer
+                  description: "Priority of the chapter for ordering purposes."
+              required:
+                - book_id
+                - name
+
   /api/chapters/{id}:
     get:
       parameters:
@@ -301,13 +333,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: Shows details of a single chapter.
+      summary: "Shows details of a single chapter."
       operationId: chapters-read
       tags:
         - chapters
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
     put:
       parameters:
         - in: path
@@ -315,13 +347,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: Updates a chapter. Include book_id to move it, if permitted.
+      summary: "Updates a chapter. Include book_id to move it, if permitted."
       operationId: chapters-update
       tags:
         - chapters
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
       requestBody:
         required: true
         content:
@@ -330,17 +362,26 @@ paths:
               type: object
               properties:
                 book_id:
-                  type: string
+                  type: integer
+                  description: "ID of the new parent book, if the chapter is being moved."
                 name:
                   type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: "Name of the chapter."
                 description:
                   type: string
-                description_html:
-                  type: string
+                  maxLength: 1900
+                  description: "A brief description of the chapter."
+
                 tags:
-                  type: string
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+                  description: "Tags associated with the chapter."
                 priority:
-                  type: string
+                  type: integer
+                  description: "Priority of the chapter for ordering purposes."
     delete:
       parameters:
         - in: path
@@ -348,28 +389,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: Deletes a chapter, typically moving it to the recycle bin.
+      summary: "Deletes a chapter, typically moving it to the recycle bin."
       operationId: chapters-delete
       tags:
         - chapters
       responses:
         '200':
-          description: Successful operation
-  /api/chapters/{id}/export/plaintext:
-    get:
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      summary: Exports a chapter as a plain text file.
-      operationId: chapters-exportPlainText
-      tags:
-        - chapters
-      responses:
-        '200':
-          description: Successful operation
+          description: "Successful operation"
   /api/chapters/{id}/export/markdown:
     get:
       parameters:
@@ -387,21 +413,21 @@ paths:
           description: Successful operation
   /api/pages:
     get:
-      summary: Retrieves a list of pages visible to the user.
+      summary: "Retrieves a list of pages visible to the user."
       operationId: pages-list
       tags:
         - pages
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
     post:
-      summary: Creates a new page. Requires a parent book/chapter ID. HTML content should be simple and single-block depth.
+      summary: "Creates a new page. Requires a parent book/chapter ID."
       operationId: pages-create
       tags:
         - pages
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
       requestBody:
         required: true
         content:
@@ -410,19 +436,29 @@ paths:
               type: object
               properties:
                 book_id:
-                  type: string
+                  type: integer
+                  description: "ID of the parent book. Required unless a chapter_id is provided."
                 chapter_id:
-                  type: string
+                  type: integer
+                  description: "ID of the parent chapter. Required unless a book_id is provided."
                 name:
                   type: string
-                html:
-                  type: string
+                  maxLength: 255
+                  description: "Name of the page."
                 markdown:
                   type: string
+                  description: "Markdown content of the page. Used if the markdown editor is active."
                 tags:
-                  type: string
+                  type: array
+                  items:
+                    type: string
+                  description: "Tags associated with the page."
                 priority:
-                  type: string
+                  type: integer
+                  description: "Priority of the page for ordering purposes."
+              required:
+                - name
+                - markdown
   /api/pages/{id}:
     get:
       parameters:
@@ -431,13 +467,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: Views a single page's details, including HTML and markdown content, as per BookStack UI and edit views.
+      summary: "Views a single page's details, including HTML and markdown content, as per BookStack UI and edit views."
       operationId: pages-read
       tags:
         - pages
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
     put:
       parameters:
         - in: path
@@ -445,13 +481,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: Updates a page. Include 'book_id' or 'chapter_id' to move it, if allowed.
+      summary: "Updates a page. Include 'book_id' or 'chapter_id' to move it, if allowed."
       operationId: pages-update
       tags:
         - pages
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
       requestBody:
         required: true
         content:
@@ -460,19 +496,27 @@ paths:
               type: object
               properties:
                 book_id:
-                  type: string
+                  type: integer
+                  description: "ID of the new parent book, if the page is being moved."
                 chapter_id:
-                  type: string
+                  type: integer
+                  description: "ID of the new parent chapter, if the page is being moved."
                 name:
                   type: string
-                html:
-                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: "Name of the page."
                 markdown:
                   type: string
+                  description: "Markdown content of the page."
                 tags:
-                  type: string
+                  type: array
+                  items:
+                    type: string
+                  description: "Tags associated with the page."
                 priority:
-                  type: string
+                  type: integer
+                  description: "Priority of the page for ordering purposes."
     delete:
       parameters:
         - in: path
@@ -480,13 +524,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: Deletes a page, typically moving it to the recycle bin.
+      summary: "Deletes a page, typically moving it to the recycle bin."
       operationId: pages-delete
       tags:
         - pages
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
   /api/pages/{id}/export/markdown:
     get:
       parameters:
@@ -504,21 +548,21 @@ paths:
           description: Successful operation
   /api/image-gallery:
     get:
-      summary: Retrieve a list of images, including gallery images and drawings, visible based on page visibility.
+      summary: "Retrieve a list of images, including gallery images and drawings, visible based on page visibility."
       operationId: image-gallery-list
       tags:
         - image-gallery
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
     post:
-      summary: Add a new image to the system. Use 'multipart/form-data' for file uploads. 'uploaded_to' should be a page ID.
+      summary: "Add a new image to the system. 'uploaded_to' should be a page ID."
       operationId: image-gallery-create
       tags:
         - image-gallery
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
       requestBody:
         required: true
         content:
@@ -528,12 +572,14 @@ paths:
               properties:
                 type:
                   type: string
+                  description: "'type' of the image, should be either 'gallery' for page content images or 'drawio' for diagrams.net images."
                 uploaded_to:
-                  type: string
-                image:
-                  type: string
+                  type: integer
+                  description: "ID of the page the image is uploaded to."
                 name:
                   type: string
+                  maxLength: 180
+                  description: "Name of the image. If omitted, the filename will be used."
   /api/image-gallery/{id}:
     get:
       parameters:
@@ -542,13 +588,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: View details of a single image, including scaled variants and default HTML/Markdown usage format.
+      summary: "View details of a single image, including scaled variants and default HTML/Markdown usage format."
       operationId: image-gallery-read
       tags:
         - image-gallery
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
     put:
       parameters:
         - in: path
@@ -556,13 +602,13 @@ paths:
           required: true
           schema:
             type: string
-      summary: Update an image's details. Use 'multipart/form-data' for new images, maintaining the original file type.
+      summary: "Update an image's details"
       operationId: image-gallery-update
       tags:
         - image-gallery
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
       requestBody:
         required: true
         content:
@@ -572,11 +618,25 @@ paths:
               properties:
                 name:
                   type: string
-                image:
-                  type: object
+                  maxLength: 180
+                  description: "New name for the image."
+    delete:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: "Deletes an image, typically moving it to the recycle bin."
+      operationId: image-gallery-delete
+      tags:
+        - image-gallery
+      responses:
+        '200':
+          description: "Successful operation"
   /api/search:
     get:
-      summary: Search across content types with input similar to the main search bar. Results may include various content types.
+      summary: "Search across content types with input similar to the main search bar. Results may include various content types."
       operationId: search-all
       tags:
         - search
@@ -586,14 +646,68 @@ paths:
           required: true
           schema:
             type: string
+          description: "The search query string, accepts the same input as the main search bar within the BookStack interface."
         - name: page
           in: query
           schema:
-            type: string
+            type: integer
+            minimum: 1
+          description: "Page number for pagination. Starts from 1."
         - name: count
           in: query
           schema:
-            type: string
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: "The number of results to return per page. This value is a suggestion, actual results may vary."
       responses:
         '200':
-          description: Successful operation
+          description: "Successful operation"
+          content:
+            application/json:
+              examples:
+                example_response:
+                  summary: "Example response"
+                  value: {
+                    "data": [
+                      {
+                        "id": 84,
+                        "book_id": 1,
+                        "slug": "a-chapter-for-cats",
+                        "name": "A chapter for cats",
+                        "type": "chapter",
+                        "url": "https://example.com/books/my-book/chapter/a-chapter-for-cats",
+                        "preview_html": {
+                          "name": "A chapter for <strong>cats</strong>",
+                          "content": "...once a bunch of <strong>cats</strong> named tony...behaviour of <strong>cats</strong> is unsuitable"
+                        },
+                        "tags": [ ]
+                      },
+                      {
+                        "id": 396,
+                        "book_id": 1,
+                        "chapter_id": 75,
+                        "name": "The hows and whys of cats",
+                        "type": "page",
+                        "url": "https://example.com/books/my-book/page/the-hows-and-whys-of-cats",
+                        "preview_html": {
+                          "name": "The hows and whys of <strong>cats</strong>",
+                          "content": "...people ask why <strong>cats</strong>? but there are...the reason that <strong>cats</strong> are fast are due to..."
+                        },
+                        "tags": [
+                          {
+                            "name": "Animal",
+                            "value": "Cat",
+                            "order": 0
+                          },
+                          {
+                            "name": "Category",
+                            "value": "Top Content",
+                            "order": 0
+                          }
+                        ]
+                      }
+                    ],
+                    "total": 3
+                  }
+
