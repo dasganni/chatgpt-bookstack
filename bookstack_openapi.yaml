@@ -1,0 +1,599 @@
+openapi: 3.0.0
+info:
+  title: Bookstack API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8082
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+  schemas:
+    Tag:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Category
+        value:
+          type: string
+          example: Top Content
+      required:
+        - name
+        - value
+security:
+  - ApiKeyAuth: []
+paths:
+  /api/attachments:
+    get:
+      summary: Retrieves a list of user-visible attachments, indicating if they are links or file uploads.
+      operationId: attachments-list
+      tags:
+        - attachments
+      responses:
+        '200':
+          description: Successful operation
+    post:
+      summary: Creates a new attachment. Requires an ID for the upload page. Use multipart/form-data for file uploads.
+      operationId: attachments-create
+      tags:
+        - attachments
+      responses:
+        '200':
+          description: Successful operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                uploaded_to:
+                  type: string
+                file:
+                  type: string
+                link:
+                  type: string
+  /api/attachments/{id}:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Fetches details and content of an attachment by ID. Content is base64 encoded for files.
+      operationId: attachments-read
+      tags:
+        - attachments
+      responses:
+        '200':
+          description: Successful operation
+    put:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Updates an attachment''s details. Use multipart/form-data for file content.
+      operationId: attachments-update
+      tags:
+        - attachments
+      responses:
+        '200':
+          description: Successful operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                uploaded_to:
+                  type: string
+                file:
+                  type: string
+                link:
+                  type: string
+    delete:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Deletes an attachment by ID.
+      operationId: attachments-delete
+      tags:
+        - attachments
+      responses:
+        '200':
+          description: Successful operation
+  /api/books:
+    get:
+      summary: Retrieves a list of books visible to the user.
+      operationId: books-list
+      tags:
+        - books
+      responses:
+        '200':
+          description: Successful operation
+    post:
+      summary: Creates a new book. Use multipart/form-data to set a cover image, or null to remove it.
+      operationId: books-create
+      tags:
+        - books
+      responses:
+        '200':
+          description: Successful operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                  description: Name of the book.
+                description:
+                  type: string
+                  maxLength: 1900
+                  description: A brief description of the book.
+                description_html:
+                  type: string
+                  maxLength: 2000
+                  description: HTML formatted description of the book.
+                tags:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Tag'
+                  description: Tags associated with the book.
+                image:
+                  type: string
+                default_template_id:
+                  type: integer
+                  nullable: true
+                  description: ID of the default template for the book.
+              required:
+                - name
+  /api/books/{id}:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Shows details of a book, including chapters and pages as seen in the BookStack interface.
+      operationId: books-read
+      tags:
+        - books
+      responses:
+        '200':
+          description: Successful operation
+    put:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Updates a book. Use multipart/form-data to set or remove a cover image.
+      operationId: books-update
+      tags:
+        - books
+      responses:
+        '200':
+          description: Successful operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                description_html:
+                  type: string
+                tags:
+                  type: string
+                image:
+                  type: string
+                default_template_id:
+                  type: string
+    delete:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Deletes a book, typically moving it to the recycle bin.
+      operationId: books-delete
+      tags:
+        - books
+      responses:
+        '200':
+          description: Successful operation
+  /api/books/{id}/export/plaintext:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Exports a book as a plain text file.
+      operationId: books-exportPlainText
+      tags:
+        - books
+      responses:
+        '200':
+          description: Successful operation
+  /api/books/{id}/export/markdown:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Exports a book as a markdown file.
+      operationId: books-exportMarkdown
+      tags:
+        - books
+      responses:
+        '200':
+          description: Successful operation
+  /api/chapters:
+    get:
+      summary: Retrieves a list of chapters visible to the user.
+      operationId: chapters-list
+      tags:
+        - chapters
+      responses:
+        '200':
+          description: Successful operation
+    post:
+      summary: Creates a new chapter in the system.
+      operationId: chapters-create
+      tags:
+        - chapters
+      responses:
+        '200':
+          description: Successful operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                book_id:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                description_html:
+                  type: string
+                tags:
+                  type: string
+                priority:
+                  type: string
+  /api/chapters/{id}:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Shows details of a single chapter.
+      operationId: chapters-read
+      tags:
+        - chapters
+      responses:
+        '200':
+          description: Successful operation
+    put:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Updates a chapter. Include book_id to move it, if permitted.
+      operationId: chapters-update
+      tags:
+        - chapters
+      responses:
+        '200':
+          description: Successful operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                book_id:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                description_html:
+                  type: string
+                tags:
+                  type: string
+                priority:
+                  type: string
+    delete:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Deletes a chapter, typically moving it to the recycle bin.
+      operationId: chapters-delete
+      tags:
+        - chapters
+      responses:
+        '200':
+          description: Successful operation
+  /api/chapters/{id}/export/plaintext:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Exports a chapter as a plain text file.
+      operationId: chapters-exportPlainText
+      tags:
+        - chapters
+      responses:
+        '200':
+          description: Successful operation
+  /api/chapters/{id}/export/markdown:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Exports a chapter as a markdown file.
+      operationId: chapters-exportMarkdown
+      tags:
+        - chapters
+      responses:
+        '200':
+          description: Successful operation
+  /api/pages:
+    get:
+      summary: Retrieves a list of pages visible to the user.
+      operationId: pages-list
+      tags:
+        - pages
+      responses:
+        '200':
+          description: Successful operation
+    post:
+      summary: Creates a new page. Requires a parent book/chapter ID. HTML content should be simple and single-block depth.
+      operationId: pages-create
+      tags:
+        - pages
+      responses:
+        '200':
+          description: Successful operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                book_id:
+                  type: string
+                chapter_id:
+                  type: string
+                name:
+                  type: string
+                html:
+                  type: string
+                markdown:
+                  type: string
+                tags:
+                  type: string
+                priority:
+                  type: string
+  /api/pages/{id}:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Views a single page's details, including HTML and markdown content, as per BookStack UI and edit views.
+      operationId: pages-read
+      tags:
+        - pages
+      responses:
+        '200':
+          description: Successful operation
+    put:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Updates a page. Include 'book_id' or 'chapter_id' to move it, if allowed.
+      operationId: pages-update
+      tags:
+        - pages
+      responses:
+        '200':
+          description: Successful operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                book_id:
+                  type: string
+                chapter_id:
+                  type: string
+                name:
+                  type: string
+                html:
+                  type: string
+                markdown:
+                  type: string
+                tags:
+                  type: string
+                priority:
+                  type: string
+    delete:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Deletes a page, typically moving it to the recycle bin.
+      operationId: pages-delete
+      tags:
+        - pages
+      responses:
+        '200':
+          description: Successful operation
+  /api/pages/{id}/export/markdown:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Exports a page as a markdown file.
+      operationId: pages-exportMarkdown
+      tags:
+        - pages
+      responses:
+        '200':
+          description: Successful operation
+  /api/image-gallery:
+    get:
+      summary: Retrieve a list of images, including gallery images and drawings, visible based on page visibility.
+      operationId: image-gallery-list
+      tags:
+        - image-gallery
+      responses:
+        '200':
+          description: Successful operation
+    post:
+      summary: Add a new image to the system. Use 'multipart/form-data' for file uploads. 'uploaded_to' should be a page ID.
+      operationId: image-gallery-create
+      tags:
+        - image-gallery
+      responses:
+        '200':
+          description: Successful operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                uploaded_to:
+                  type: string
+                image:
+                  type: string
+                name:
+                  type: string
+  /api/image-gallery/{id}:
+    get:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: View details of a single image, including scaled variants and default HTML/Markdown usage format.
+      operationId: image-gallery-read
+      tags:
+        - image-gallery
+      responses:
+        '200':
+          description: Successful operation
+    put:
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      summary: Update an image's details. Use 'multipart/form-data' for new images, maintaining the original file type.
+      operationId: image-gallery-update
+      tags:
+        - image-gallery
+      responses:
+        '200':
+          description: Successful operation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                image:
+                  type: object
+  /api/search:
+    get:
+      summary: Search across content types with input similar to the main search bar. Results may include various content types.
+      operationId: search-all
+      tags:
+        - search
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: string
+        - name: count
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
