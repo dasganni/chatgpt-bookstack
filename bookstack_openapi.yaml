@@ -373,7 +373,6 @@ paths:
                   type: string
                   maxLength: 1900
                   description: "A brief description of the chapter."
-
                 tags:
                   type: array
                   items:
@@ -451,7 +450,7 @@ paths:
                 tags:
                   type: array
                   items:
-                    type: string
+                    $ref: '#/components/schemas/Tag'
                   description: "Tags associated with the page."
                 priority:
                   type: integer
@@ -512,7 +511,7 @@ paths:
                 tags:
                   type: array
                   items:
-                    type: string
+                    $ref: '#/components/schemas/Tag'
                   description: "Tags associated with the page."
                 priority:
                   type: integer
